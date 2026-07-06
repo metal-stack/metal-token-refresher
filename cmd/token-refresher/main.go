@@ -43,19 +43,16 @@ func main() {
 
 	log.Info("refreshing metal-apiserver token", "metal-apiserver-url", cfg.MetalAPIServerURL)
 
-	dial := &apiclient.DialConfig{
-		BaseURL: cfg.MetalAPIServerURL,
-		Log:     log,
-		Token:   "", // handled by refresher
-	}
+	refresh := refresher.New(log, cs, func(token string) (apiclient.Client, error) {
+		dial := &apiclient.DialConfig{
+			BaseURL: cfg.MetalAPIServerURL,
+			Log:     log,
+			Token:   "", // handled by refresher
+		}
 
-	client, err := apiclient.New(dial)
-	if err != nil {
-		log.Error("failed to create metal-apiserver client", "error", err)
-		panic(err)
-	}
+		return apiclient.New(dial)
+	})
 
-	refresh := refresher.New(log, cs, dial, client)
 	err = refresh.RefreshSecret(context.Background(), refresher.TokenSecretKeyRef{
 		Namespace: cfg.SecretNamespace,
 		Name:      cfg.SecretName,

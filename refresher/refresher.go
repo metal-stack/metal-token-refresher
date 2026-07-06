@@ -2,6 +2,7 @@ package refresher
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -13,12 +14,14 @@ import (
 )
 
 type (
+	ClientForToken func(token string) (apiclient.Client, error)
+
 	Refresher struct {
-		log       *slog.Logger
-		clientset *kubernetes.Clientset
-		dial      *apiclient.DialConfig
-		client    apiclient.Client
+		log            *slog.Logger
+		clientset      kubernetes.Interface
+		clientForToken ClientForToken
 	}
+
 	TokenSecretKeyRef struct {
 		Namespace string
 		Name      string
@@ -26,12 +29,11 @@ type (
 	}
 )
 
-func New(log *slog.Logger, clientset *kubernetes.Clientset, dial *apiclient.DialConfig, client apiclient.Client) *Refresher {
+func New(log *slog.Logger, clientset kubernetes.Interface, clientForToken ClientForToken) *Refresher {
 	return &Refresher{
-		log:       log,
-		clientset: clientset,
-		dial:      dial,
-		client:    client,
+		log:            log,
+		clientset:      clientset,
+		clientForToken: clientForToken,
 	}
 }
 
@@ -47,14 +49,18 @@ func (r *Refresher) RefreshSecret(ctx context.Context, ref TokenSecretKeyRef) er
 	tok, ok := tokSec.Data[ref.Key]
 	if !ok {
 		r.log.Error("missing token in secret", "key", ref.Key)
+		return fmt.Errorf("key %q not found in secret %s/%s", ref.Key, ref.Namespace, ref.Name)
+	}
+
+	client, err := r.clientForToken(string(tok))
+	if err != nil {
+		r.log.Error("failed to create a metal client for token", "error", err)
 		return err
 	}
 
-	r.dial.Token = string(tok)
-
 	r.log.Info("refreshing token...")
 
-	tokResp, err := r.client.Apiv2().Token().Refresh(ctx, &apiv2.TokenServiceRefreshRequest{})
+	tokResp, err := client.Apiv2().Token().Refresh(ctx, &apiv2.TokenServiceRefreshRequest{})
 	if err != nil {
 		r.log.Error("failed to refresh token", "error", err)
 		return err
@@ -71,6 +77,8 @@ func (r *Refresher) RefreshSecret(ctx context.Context, ref TokenSecretKeyRef) er
 	annos[spec.AnnotationTokenDescription] = tokResp.Token.Description
 	annos[spec.AnnotationTokenExpires] = tokResp.Token.Expires.AsTime().Format(time.RFC3339)
 	annos[spec.AnnotationTokenIssuedAt] = tokResp.Token.IssuedAt.AsTime().Format(time.RFC3339)
+
+	tokSec.SetAnnotations(annos)
 
 	_, err = r.clientset.CoreV1().Secrets(ref.Namespace).Update(ctx, tokSec, metav1.UpdateOptions{})
 	if err != nil {
