@@ -47,7 +47,7 @@ func main() {
 		dial := &apiclient.DialConfig{
 			BaseURL: cfg.MetalAPIServerURL,
 			Log:     log,
-			Token:   "", // handled by refresher
+			Token:   token,
 		}
 
 		return apiclient.New(dial)
