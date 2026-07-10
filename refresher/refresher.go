@@ -86,5 +86,7 @@ func (r *Refresher) RefreshSecret(ctx context.Context, ref TokenSecretKeyRef) er
 		return err
 	}
 
+	r.log.Info("updated token secret")
+
 	return nil
 }
