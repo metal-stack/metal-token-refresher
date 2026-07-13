@@ -39,7 +39,13 @@ spec:
               value: "token-secret"
             - name: TOKEN_SECRET_KEY
               value: "token"
-
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: token-secret
+data:
+  token: "..."
 ```
 
 Also make sure to configure the service account accordingly.
