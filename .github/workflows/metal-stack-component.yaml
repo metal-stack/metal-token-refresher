@@ -12,6 +12,9 @@ on:
     branches:
       - main
 
+permissions:
+  packages: write
+
 jobs:
   draft:
     uses: metal-stack/actions-common/.github/workflows/release-drafter.yaml@v1
