@@ -12,12 +12,12 @@ on:
     branches:
       - main
 
-permissions:
-  packages: write
-
 jobs:
   draft:
     uses: metal-stack/actions-common/.github/workflows/release-drafter.yaml@v1
+    permissions:
+      # for dependabot
+      contents: write
 
   spell-check:
     uses: metal-stack/actions-common/.github/workflows/spell-check.yaml@v1
@@ -25,6 +25,9 @@ jobs:
   go-build:
     uses: metal-stack/actions-common/.github/workflows/go-build.yaml@v1
     secrets: inherit
+    permissions:
+      # for dependabot
+      packages: write
     with:
       test-command: make test
       build-command: make token-refresher
