@@ -46,6 +46,11 @@ func (r *Refresher) RefreshSecret(ctx context.Context, ref TokenSecretKeyRef) er
 		return err
 	}
 
+	if tokSec.Data == nil {
+		r.log.Error("missing token in secret", "key", ref.Key)
+		return fmt.Errorf("key %q not found in secret %s/%s", ref.Key, ref.Namespace, ref.Name)
+	}
+
 	tok, ok := tokSec.Data[ref.Key]
 	if !ok {
 		r.log.Error("missing token in secret", "key", ref.Key)

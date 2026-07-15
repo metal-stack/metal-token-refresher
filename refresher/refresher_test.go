@@ -198,6 +198,30 @@ func TestRefreshSecret(t *testing.T) {
 		},
 		// error cases
 		{
+			name: "fails when secret is empty",
+			ref: TokenSecretKeyRef{
+				Name:      "some-secret",
+				Namespace: "my-namespace",
+				Key:       "token",
+			},
+			beforeSecret: &v1.Secret{
+				Data: nil,
+			},
+			responseOk: &apiv2.TokenServiceRefreshResponse{
+				Secret: "new-token",
+				Token: &apiv2.Token{
+					User:        "some-user",
+					Description: "some description",
+					Expires:     mustTimestamp("2006-01-02T16:04:05Z"),
+					IssuedAt:    mustTimestamp("2006-01-02T14:04:05Z"),
+				},
+			},
+			wantSecret: &v1.Secret{
+				Data: nil,
+			},
+			wantError: `key "token" not found in secret my-namespace/some-secret`,
+		},
+		{
 			name: "fails when refresh fails",
 			ref: TokenSecretKeyRef{
 				Name:      "some-secret",
@@ -239,7 +263,7 @@ func TestRefreshSecret(t *testing.T) {
 					"token": []byte("old-token"),
 				},
 			},
-			wantError: "secrets \"some-secret\" not found",
+			wantError: `secrets "some-secret" not found`,
 		},
 	}
 
