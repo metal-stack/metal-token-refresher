@@ -37,11 +37,6 @@ updates:
           - "google.golang.org/protobuf"
           - "connectrpc.com/*"
 
-      k8s:
-        applies-to: version-updates
-        patterns:
-          - "k8s.io/*"
-
       other:
         applies-to: version-updates
         update-types:
@@ -53,4 +48,3 @@ updates:
           - "github.com/metal-stack/*"
           - "google.golang.org/protobuf"
           - "connectrpc.com/*"
-          - "k8s.io/*"
