@@ -27,18 +27,18 @@ func main() {
 	cfg, err := spec.LoadConfig()
 	if err != nil {
 		log.Error("configuration error", "error", err)
-		panic(err)
+		os.Exit(1)
 	}
 
 	restCfg, err := rest.InClusterConfig()
 	if err != nil {
 		log.Error("failed to fetch in cluster rest config", "error", err)
-		panic(err)
+		os.Exit(1)
 	}
 	cs, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
 		log.Error("failed to create in cluster client", "error", err)
-		panic(err)
+		os.Exit(1)
 	}
 
 	log.Info("refreshing metal-apiserver token", "metal-apiserver-url", cfg.MetalAPIServerURL)
@@ -59,6 +59,7 @@ func main() {
 		Key:       cfg.SecretKey,
 	})
 	if err != nil {
-		panic(err)
+		// error will be logged by refresh.RefreshSecret
+		os.Exit(1)
 	}
 }
