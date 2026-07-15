@@ -23,14 +23,5 @@ jobs:
     uses: metal-stack/actions-common/.github/workflows/go-build.yaml@v1
     secrets: inherit
     with:
-      lint: true
-      test: true
-      build: true
       test-command: make test
       build-command: make token-refresher
-      registry: ghcr.io
-      registry-username: ${{ github.actor }}
-      image-name: ${{ github.repository }}
-      context: .
-      dockerfile: Dockerfile
-      artifact-files: ""
