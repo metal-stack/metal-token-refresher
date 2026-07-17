@@ -21,6 +21,8 @@ jobs:
 
   spell-check:
     uses: metal-stack/actions-common/.github/workflows/spell-check.yaml@v1
+    permissions:
+      contents: read
 
   go-build:
     uses: metal-stack/actions-common/.github/workflows/go-build.yaml@v1
