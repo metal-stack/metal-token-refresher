@@ -2,19 +2,23 @@ package refresher
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/golang-jwt/jwt/v5"
 	apiclient "github.com/metal-stack/api/go/client"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	apitests "github.com/metal-stack/api/go/tests"
 	"github.com/metal-stack/metal-token-refresher/spec"
-	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,11 +39,26 @@ func testLogger() *slog.Logger {
 }
 
 func TestRefreshSecret(t *testing.T) {
+	var (
+		oldToken string
+		newToken string
+	)
+
+	oldToken, err := generateToken(10 * time.Minute)
+	if err != nil {
+		t.Fatalf("failed to generate token, due to %s", err)
+	}
+
+	newToken, err = generateToken(10 * time.Minute)
+	if err != nil {
+		t.Fatalf("failed to generate token, due to %s", err)
+	}
+
 	tests := []struct {
 		name         string
 		ref          TokenSecretKeyRef
 		responseOk   *apiv2.TokenServiceRefreshResponse
-		responseErr  error
+		responseErr  *connect.Error
 		beforeSecret *v1.Secret
 		wantSecret   *v1.Secret
 		wantError    string
@@ -53,11 +72,11 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			beforeSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"token": []byte("old-token"),
+					"token": []byte(oldToken),
 				},
 			},
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -75,7 +94,7 @@ func TestRefreshSecret(t *testing.T) {
 					},
 				},
 				Data: map[string][]byte{
-					"token": []byte("new-token"),
+					"token": []byte(newToken),
 				},
 			},
 		},
@@ -97,11 +116,11 @@ func TestRefreshSecret(t *testing.T) {
 					},
 				},
 				Data: map[string][]byte{
-					"token": []byte("old-token"),
+					"token": []byte(oldToken),
 				},
 			},
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -120,7 +139,7 @@ func TestRefreshSecret(t *testing.T) {
 					},
 				},
 				Data: map[string][]byte{
-					"token": []byte("new-token"),
+					"token": []byte(newToken),
 				},
 			},
 		},
@@ -133,12 +152,12 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			beforeSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"token":     []byte("old-token"),
+					"token":     []byte(oldToken),
 					"something": []byte("keep it"),
 				},
 			},
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -156,7 +175,7 @@ func TestRefreshSecret(t *testing.T) {
 					},
 				},
 				Data: map[string][]byte{
-					"token":     []byte("new-token"),
+					"token":     []byte(newToken),
 					"something": []byte("keep it"),
 				},
 			},
@@ -170,11 +189,11 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			beforeSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"secret-token": []byte("old-token"),
+					"secret-token": []byte(oldToken),
 				},
 			},
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -192,7 +211,7 @@ func TestRefreshSecret(t *testing.T) {
 					},
 				},
 				Data: map[string][]byte{
-					"secret-token": []byte("new-token"),
+					"secret-token": []byte(newToken),
 				},
 			},
 		},
@@ -208,7 +227,7 @@ func TestRefreshSecret(t *testing.T) {
 				Data: nil,
 			},
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -222,7 +241,7 @@ func TestRefreshSecret(t *testing.T) {
 			wantError: `key "token" not found in secret my-namespace/some-secret`,
 		},
 		{
-			name: "fails when refresh fails",
+			name: "fails when refresh fails due to some api error",
 			ref: TokenSecretKeyRef{
 				Name:      "some-secret",
 				Namespace: "my-namespace",
@@ -230,16 +249,36 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			beforeSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"token": []byte("old-token"),
+					"token": []byte(oldToken),
 				},
 			},
-			responseErr: fmt.Errorf("internal server error"),
+			responseErr: connect.NewError(connect.CodeInternal, errors.New("internal server error")),
 			wantSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"token": []byte("old-token"),
+					"token": []byte(oldToken),
 				},
 			},
-			wantError: "internal server error",
+			wantError: "internal: internal server error",
+		},
+		{
+			name: "fails when refresh fails due to unauthenticated",
+			ref: TokenSecretKeyRef{
+				Name:      "some-secret",
+				Namespace: "my-namespace",
+				Key:       "token",
+			},
+			beforeSecret: &v1.Secret{
+				Data: map[string][]byte{
+					"token": []byte(oldToken),
+				},
+			},
+			responseErr: connect.NewError(connect.CodeUnauthenticated, errors.New("token expired")),
+			wantSecret: &v1.Secret{
+				Data: map[string][]byte{
+					"token": []byte(oldToken),
+				},
+			},
+			wantError: "unauthenticated: token expired",
 		},
 		{
 			name: "fails when secret not found",
@@ -250,7 +289,7 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			beforeSecret: nil,
 			responseOk: &apiv2.TokenServiceRefreshResponse{
-				Secret: "new-token",
+				Secret: newToken,
 				Token: &apiv2.Token{
 					User:        "some-user",
 					Description: "some description",
@@ -260,10 +299,30 @@ func TestRefreshSecret(t *testing.T) {
 			},
 			wantSecret: &v1.Secret{
 				Data: map[string][]byte{
-					"token": []byte("old-token"),
+					"token": []byte(oldToken),
 				},
 			},
 			wantError: `secrets "some-secret" not found`,
+		},
+		{
+			name: "fails when token in secret is invalid",
+			ref: TokenSecretKeyRef{
+				Name:      "some-secret",
+				Namespace: "my-namespace",
+				Key:       "token",
+			},
+			beforeSecret: &v1.Secret{
+				Data: map[string][]byte{
+					"token": []byte("invalid token"),
+				},
+			},
+			wantSecret: &v1.Secret{
+				Data: map[string][]byte{
+					"token": []byte("invalid token"),
+				},
+			},
+			// this error is thrown on apiclient creation
+			wantError: `unable to parse token:token is malformed: token contains an invalid number of segments`,
 		},
 	}
 
@@ -279,15 +338,27 @@ func TestRefreshSecret(t *testing.T) {
 			cs := fake.NewSimpleClientset(objs...)
 
 			ref := New(testLogger(), cs, func(token string) (apiclient.Client, error) {
-				mocks := apitests.New(t)
-				return mocks.Client(&apitests.ClientMockFns{
-					Apiv2Mocks: &apitests.Apiv2MockFns{
-						Token: func(m *mock.Mock) {
-							m.On("Refresh", mock.IsType(context.Background()), &apiv2.TokenServiceRefreshRequest{}).
-								Return(tt.responseOk, tt.responseErr)
-						},
+				refreshCall := apiclient.ClientCall{
+					WantRequest: &apiv2.TokenServiceRefreshRequest{},
+				}
+
+				if tt.responseOk != nil {
+					refreshCall.WantResponse = func() connect.AnyResponse {
+						return connect.NewResponse(tt.responseOk)
+					}
+				} else if tt.responseErr != nil {
+					refreshCall.WantError = tt.responseErr
+				}
+
+				return apiclient.New(&apiclient.DialConfig{
+					BaseURL: "http://localhost",
+					Token:   token,
+					Interceptors: []connect.Interceptor{
+						apiclient.NewTestInterceptor(t, []apiclient.ClientCall{
+							refreshCall,
+						}),
 					},
-				}), nil
+				})
 			})
 
 			err := ref.RefreshSecret(context.Background(), tt.ref)
@@ -324,4 +395,23 @@ func TestRefreshSecret(t *testing.T) {
 			}
 		})
 	}
+}
+
+func generateToken(duration time.Duration) (string, error) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", err
+	}
+
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+		Issuer:    "test",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
