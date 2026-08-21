@@ -85,13 +85,11 @@ func TestRefreshSecret(t *testing.T) {
 				},
 			},
 			wantSecret: &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						spec.AnnotationTokenUser:        "some-user",
-						spec.AnnotationTokenDescription: "some description",
-						spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
-						spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
-					},
+				Annotations: map[string]string{
+					spec.AnnotationTokenUser:        "some-user",
+					spec.AnnotationTokenDescription: "some description",
+					spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
+					spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
 				},
 				Data: map[string][]byte{
 					"token": []byte(newToken),
@@ -106,14 +104,12 @@ func TestRefreshSecret(t *testing.T) {
 				Key:       "token",
 			},
 			beforeSecret: &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						spec.AnnotationTokenUser:        "outdated-user",
-						spec.AnnotationTokenDescription: "outdated description",
-						spec.AnnotationTokenExpires:     "2006-01-01T16:04:05Z",
-						spec.AnnotationTokenIssuedAt:    "2006-01-01T14:04:05Z",
-						"another-annotation":            "keep-it",
-					},
+				Annotations: map[string]string{
+					spec.AnnotationTokenUser:        "outdated-user",
+					spec.AnnotationTokenDescription: "outdated description",
+					spec.AnnotationTokenExpires:     "2006-01-01T16:04:05Z",
+					spec.AnnotationTokenIssuedAt:    "2006-01-01T14:04:05Z",
+					"another-annotation":            "keep-it",
 				},
 				Data: map[string][]byte{
 					"token": []byte(oldToken),
@@ -129,14 +125,12 @@ func TestRefreshSecret(t *testing.T) {
 				},
 			},
 			wantSecret: &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						spec.AnnotationTokenUser:        "some-user",
-						spec.AnnotationTokenDescription: "some description",
-						spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
-						spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
-						"another-annotation":            "keep-it",
-					},
+				Annotations: map[string]string{
+					spec.AnnotationTokenUser:        "some-user",
+					spec.AnnotationTokenDescription: "some description",
+					spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
+					spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
+					"another-annotation":            "keep-it",
 				},
 				Data: map[string][]byte{
 					"token": []byte(newToken),
@@ -166,13 +160,11 @@ func TestRefreshSecret(t *testing.T) {
 				},
 			},
 			wantSecret: &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						spec.AnnotationTokenUser:        "some-user",
-						spec.AnnotationTokenDescription: "some description",
-						spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
-						spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
-					},
+				Annotations: map[string]string{
+					spec.AnnotationTokenUser:        "some-user",
+					spec.AnnotationTokenDescription: "some description",
+					spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
+					spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
 				},
 				Data: map[string][]byte{
 					"token":     []byte(newToken),
@@ -202,13 +194,11 @@ func TestRefreshSecret(t *testing.T) {
 				},
 			},
 			wantSecret: &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						spec.AnnotationTokenUser:        "some-user",
-						spec.AnnotationTokenDescription: "some description",
-						spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
-						spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
-					},
+				Annotations: map[string]string{
+					spec.AnnotationTokenUser:        "some-user",
+					spec.AnnotationTokenDescription: "some description",
+					spec.AnnotationTokenExpires:     "2006-01-02T16:04:05Z",
+					spec.AnnotationTokenIssuedAt:    "2006-01-02T14:04:05Z",
 				},
 				Data: map[string][]byte{
 					"secret-token": []byte(newToken),
