@@ -5,7 +5,7 @@ go 1.27
 require (
 	connectrpc.com/connect v1.20.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/metal-stack/api v0.5.1
+	github.com/metal-stack/api v0.5.3
 	github.com/metal-stack/v v1.0.3
 	google.golang.org/protobuf v1.36.12
 	k8s.io/api v0.36.4
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260709200747-435963d16310.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
