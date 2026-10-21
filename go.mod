@@ -5,7 +5,7 @@ go 1.27
 require (
 	connectrpc.com/connect v1.21.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/metal-stack/api v0.8.1
+	github.com/metal-stack/api v0.8.2
 	github.com/metal-stack/v v1.0.3
 	google.golang.org/protobuf v1.36.12
 	k8s.io/api v0.37.1

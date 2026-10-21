@@ -61,8 +61,8 @@ github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTf
 github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/klauspost/connect-compress/v2 v2.1.1 h1:ycZNp4rWOZBodVE2Ls5AzK4aHkyK+GteEfzRZgKNs+c=
 github.com/klauspost/connect-compress/v2 v2.1.1/go.mod h1:9oilsPHJMzGKkjafSBk9J7iVo4mO+dw0G0KSdVpnlVE=
-github.com/metal-stack/api v0.8.1 h1:G3qxBp+qcLNcUAIMWRVFRbZRlhFqDJ2x4VkDqWigR1M=
-github.com/metal-stack/api v0.8.1/go.mod h1:k/YxFFylmQOJc3TAezF6NkLE60Qppe2Gq/hg5pLUUpw=
+github.com/metal-stack/api v0.8.2 h1:GWgtAqN2jp5TTkmjVlIUKQptc80KY4cSH0/cwYLYKIs=
+github.com/metal-stack/api v0.8.2/go.mod h1:mx2KOLoCwogU/riKSYTYAb1DXtP7n4A0+FitzOxlCUE=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=
 github.com/metal-stack/v v1.0.3/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/minio/minlz v1.2.2 h1:o3YoP6f3VG0oY3Ykhx2mHrpCywsoobsFPVWslgfKcbY=
